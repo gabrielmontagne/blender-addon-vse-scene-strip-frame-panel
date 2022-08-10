@@ -1,4 +1,5 @@
 """
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -37,6 +38,13 @@ into account: This is potentially something that could be added.
 import bpy
 from bpy.utils import smpte_from_frame
 
+bl_info = {
+    'name': "VSE Strip Time Data Panel",
+    'category': 'Development',
+    'author': "Adam Morris, tin2tin",
+    'blender': (2, 80, 0)
+}
+
 class RealFrameNumberDisplay(bpy.types.Panel):
     bl_label = "Strip Time Data"
     bl_idname = "VSE_strip_time_data"
@@ -44,14 +52,12 @@ class RealFrameNumberDisplay(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = 'Strip'
 
-    '''
     @classmethod
     def poll(cls, context):
         if context.scene and context.scene.sequence_editor and context.scene.sequence_editor.active_strip:
             return context.scene.sequence_editor.active_strip.type == 'SCENE'
         else:
             return False
-    '''
 
     def draw(self, context):
         layout = self.layout
@@ -122,5 +128,3 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-
-
