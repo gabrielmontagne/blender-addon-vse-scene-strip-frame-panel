@@ -62,62 +62,40 @@ class RealFrameNumberDisplay(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-        # get the active scene
         scn = bpy.context.scene
 
-        # get the scene frame number
         currentFrame = scn.frame_current
-
-        # get the VSE active strip properties
         stripStart = scn.sequence_editor.active_strip.frame_start
-
         stripOffset = scn.sequence_editor.active_strip.frame_offset_start
-
-        # calculate the number of frames between the play head and the start of the strip
         frameOfStrip = currentFrame - (stripStart + stripOffset)
-
-        # get the strip's parent scene name
         stripScene = scn.sequence_editor.active_strip.scene.name
-
-        # get the in point of the strip's parent scene
         realStripStart = bpy.data.scenes[str(stripScene)].frame_start
-
-        # calculate the real frame number of the strip
         realFrameNum = realStripStart + stripOffset + frameOfStrip
 
-        #
         row = layout.row()
         row.label(text="Frame Number")
 
-        # Display scene frame number
         row = layout.row()
         row.label(text="Scene Frame: " + str(scn.frame_current), icon='SEQUENCE')
 
-        # Display strip internal frame number
         row = layout.row()
         row.label(text="Strip Frame (internal): " + str(realFrameNum), icon='SCENE_DATA')
 
-        # Display selected strip frame number
         row = layout.row()
         row.label(text="Strip Frame (selected): " + str(frameOfStrip), icon='SEQ_STRIP_DUPLICATE')
 
-        #
         row = layout.row()
         row.label(text="Time Code")
 
-        # Display scene frame number
         row = layout.row()
         row.label(text="Scene Time: " + smpte_from_frame(scn.frame_current), icon='SEQUENCE')
 
-        # Display strip internal frame number
         row = layout.row()
         row.label(text="Strip Time (internal): " + smpte_from_frame(realFrameNum), icon='SCENE_DATA')
 
-        # Display selected strip frame number
         row = layout.row()
         row.label(text="Strip Time (selected): " + smpte_from_frame(frameOfStrip), icon='SEQ_STRIP_DUPLICATE')
 
-    # Update output on scene frame change
     bpy.app.handlers.frame_change_pre.append(draw)
 
 def register():
