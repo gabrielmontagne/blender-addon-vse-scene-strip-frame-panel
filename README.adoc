@@ -3,4 +3,4 @@
 Very light wrapping around https://github.com/admorris86[Adam Morris'] https://github.com/admorris86/Blender-Scripts/blob/main/VSE_show_strip_real_frame_number.py[implementation] with https://github.com/tin2tin[tin2tin's] poll function included.
 
 
-![alt text](https://github.com/tin2tin/blender-addon-vse-scene-strip-frame-panel/blob/Time-Panel/Scene_Strip_time.png?raw=true)
+image::Scene_Strip_time.png[panel]
