@@ -39,70 +39,107 @@ import bpy
 from bpy.utils import smpte_from_frame
 
 bl_info = {
-    'name': "VSE Strip Time Data Panel",
-    'category': 'Development',
-    'author': "Adam Morris, tin2tin",
-    'blender': (2, 80, 0)
+    "name": "VSE Strip Time Data Panel",
+    "category": "Development",
+    "author": "Adam Morris, tin2tin",
+    "blender": (2, 80, 0),
 }
 
-class RealFrameNumberDisplay(bpy.types.Panel):
-    bl_label = "Strip Time Data"
-    bl_idname = "VSE_strip_time_data"
-    bl_space_type = 'SEQUENCE_EDITOR'
-    bl_region_type = 'UI'
-    bl_category = 'Strip'
+def draw(self, context):
+    from bpy.utils import smpte_from_frame
 
-    @classmethod
-    def poll(cls, context):
-        if context.scene and context.scene.sequence_editor and context.scene.sequence_editor.active_strip:
-            return context.scene.sequence_editor.active_strip.type == 'SCENE'
-        else:
-            return False
+    layout = self.layout
+    layout.use_property_split = False
+    layout.use_property_decorate = False
 
-    def draw(self, context):
-        layout = self.layout
+    scene = context.scene
+    frame_current = scene.frame_current
+    strip = context.active_sequence_strip
 
-        scn = bpy.context.scene
+    is_effect = isinstance(strip, bpy.types.EffectSequence)
 
-        currentFrame = scn.frame_current
-        stripStart = scn.sequence_editor.active_strip.frame_start
-        stripOffset = scn.sequence_editor.active_strip.frame_offset_start
-        frameOfStrip = currentFrame - (stripStart + stripOffset)
-        stripScene = scn.sequence_editor.active_strip.scene.name
-        realStripStart = bpy.data.scenes[str(stripScene)].frame_start
-        realFrameNum = realStripStart + stripOffset + frameOfStrip
+    # Get once.
+    frame_start = strip.frame_start
+    frame_final_start = strip.frame_final_start
+    frame_final_end = strip.frame_final_end
+    frame_final_duration = strip.frame_final_duration
+    frame_offset_start = strip.frame_offset_start
+    frame_offset_end = strip.frame_offset_end
 
-        row = layout.row()
-        row.label(text="Frame Number")
+    length_list = (
+        str(frame_start),
+        str(frame_final_end),
+        str(frame_final_duration),
+        str(frame_offset_start),
+        str(frame_offset_end),
+    )
 
-        row = layout.row()
-        row.label(text="Scene Frame: " + str(scn.frame_current), icon='SEQUENCE')
+    if not is_effect:
+        length_list = length_list + (
+            str(strip.animation_offset_start),
+            str(strip.animation_offset_end),
+        )
+    max_length = max(len(x) for x in length_list) + 2
+    max_factor = (1.9 - max_length) / 30
 
-        row = layout.row()
-        row.label(text="Strip Frame (internal): " + str(realFrameNum), icon='SCENE_DATA')
+    layout.enabled = not strip.lock
+    layout.active = not strip.mute
+    col = layout.box()
+    if strip.type == "SCENE":
+        col = col.column(align=True)
+        strip_scene = scene.sequence_editor.active_strip.scene.name
+        frame_original_start = bpy.data.scenes[str(strip_scene)].frame_start
+        frame_original_frame = frame_current - (frame_start + frame_offset_start)
+        frame_original = (
+            frame_original_start + frame_offset_start + frame_original_frame
+        )
+        scene = strip.scene
 
-        row = layout.row()
-        row.label(text="Strip Frame (selected): " + str(frameOfStrip), icon='SEQ_STRIP_DUPLICATE')
+        split = col.split(factor=0.52 + max_factor, align=True)
+        split.alignment = "RIGHT"
+        split.label(text="Original Frame")
+        split = split.split(factor=0.8 + max_factor, align=True)
+        split.label(text="%14s" % smpte_from_frame(frame_original))
+        split.alignment = "RIGHT"
+        split.label(text=str(frame_original) + "    ")
 
-        row = layout.row()
-        row.label(text="Time Code")
+        if scene:
+            sta = scene.frame_start
+            end = scene.frame_end
 
-        row = layout.row()
-        row.label(text="Scene Time: " + smpte_from_frame(scn.frame_current), icon='SEQUENCE')
+            split = col.split(factor=0.52 + max_factor, align=True)
+            split.alignment = "RIGHT"
+            split.label(text="Start")
+            split = split.split(factor=0.8 + max_factor, align=True)
+            split.label(text="%14s" % smpte_from_frame(sta))
+            split.alignment = "RIGHT"
+            split.label(text=str(sta) + "    ")
 
-        row = layout.row()
-        row.label(text="Strip Time (internal): " + smpte_from_frame(realFrameNum), icon='SCENE_DATA')
+            split = col.split(factor=0.52 + max_factor, align=True)
+            split.alignment = "RIGHT"
+            split.label(text="End")
+            split = split.split(factor=0.8 + max_factor, align=True)
+            split.label(text="%14s" % smpte_from_frame(end))
+            split.alignment = "RIGHT"
+            split.label(text=str(end) + "    ")
 
-        row = layout.row()
-        row.label(text="Strip Time (selected): " + smpte_from_frame(frameOfStrip), icon='SEQ_STRIP_DUPLICATE')
+            split = col.split(factor=0.52 + max_factor, align=True)
+            split.alignment = "RIGHT"
+            split.label(text="Duration")
+            split = split.split(factor=0.8 + max_factor, align=True)
+            split.label(text="%14s" % smpte_from_frame(end - sta))
+            split.alignment = "RIGHT"
+            split.label(text=str(end - sta) + "    ")
 
-    bpy.app.handlers.frame_change_pre.append(draw)
 
 def register():
-    bpy.utils.register_class(RealFrameNumberDisplay)
+    bpy.types.SEQUENCER_PT_time.append(draw)
+    bpy.app.handlers.frame_change_pre.append(draw)
+
 
 def unregister():
-    bpy.utils.unregister_class(RealFrameNumberDisplay)
+    bpy.types.SEQUENCER_PT_time.remove(draw)
+
 
 if __name__ == "__main__":
     register()
